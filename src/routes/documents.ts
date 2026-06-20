@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import multer from 'multer';
 
+import { requireAuth } from '../middleware/requireAuth.js';
 import { deleteDocumentChunks } from '../services/database.js';
 import { ingestPdfBuffer } from '../services/ingestion.js';
 
 const router = Router();
+router.use(requireAuth);
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/', upload.single('file'), async (req, res) => {

@@ -25,5 +25,5 @@ export const auth = betterAuth({
   advanced: {
     trustedProxyHeaders: true,
   },
-  baseURL: 'http://localhost:4000',
+  baseURL: 'https://loving-busy-rodent.ngrok-free.app/',
 });
