@@ -7,6 +7,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  trustedOrigins: ['http://localhost:3000'],
   emailAndPassword: {
     enabled: true,
   },
@@ -25,5 +26,5 @@ export const auth = betterAuth({
   advanced: {
     trustedProxyHeaders: true,
   },
-  baseURL: 'https://loving-busy-rodent.ngrok-free.app/',
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
 });

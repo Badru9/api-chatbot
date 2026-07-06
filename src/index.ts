@@ -5,6 +5,7 @@ import { auth } from './services/auth.js';
 
 import chatRoutes from './routes/chat.js';
 import documentRoutes from './routes/documents.js';
+import menuRoutes from './routes/menus.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,6 +24,7 @@ app.use(express.json());
 
 app.use('/api/documents', documentRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/menus', menuRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

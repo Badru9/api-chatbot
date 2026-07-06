@@ -1,3 +1,11 @@
 node_modules/
 dist/
 .env
+
+# Python Virtual Environment & Cache
+python-service/venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/

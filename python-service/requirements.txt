@@ -1,0 +1,9 @@
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+FlagEmbedding>=1.2.0
+numpy>=1.22.0
+torch
+pydantic>=2.0.0
+transformers<4.45.0
+tokenizers<0.20.0
+

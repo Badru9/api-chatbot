@@ -18,7 +18,7 @@ model PdfChunk {
   chunkIndex   Int      @map("chunk_index")
   chunkText    String   @map("chunk_text") @db.Text
   tokenCount   Int      @map("token_count")
-  embedding    Unsupported("vector(384)")
+  embedding    Unsupported("vector(1024)")
   metadata     Json     @default("{}")
   createdAt    DateTime @default(now()) @map("created_at")
 

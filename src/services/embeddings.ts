@@ -1,19 +1,22 @@
-import { pipeline } from '@huggingface/transformers';
-
-let extractorInstance: any = null;
-
-async function getExtractor() {
-  if (!extractorInstance) {
-    extractorInstance = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-  }
-  return extractorInstance;
-}
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
 
 export async function embedText(text: string): Promise<number[]> {
   try {
-    const extractor = await getExtractor();
-    const output = await extractor(text, { pooling: 'mean', normalize: true });
-    return Array.from(output.data);
+    const response = await fetch(`${PYTHON_SERVICE_URL}/embed`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Python service error: ${response.status} - ${errorText}`);
+    }
+
+    const data = (await response.json()) as { embedding: number[] };
+    return data.embedding;
   } catch (error) {
     console.error('Error generating embedding:', error);
     throw new Error('Gagal membuat embedding dokumen.');
@@ -21,9 +24,27 @@ export async function embedText(text: string): Promise<number[]> {
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-  const embeddings: number[][] = [];
-  for (const text of texts) {
-    embeddings.push(await embedText(text));
+  try {
+    if (texts.length === 0) return [];
+    
+    const response = await fetch(`${PYTHON_SERVICE_URL}/embed/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ texts }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Python service error: ${response.status} - ${errorText}`);
+    }
+
+    const data = (await response.json()) as { embeddings: number[][] };
+    return data.embeddings;
+  } catch (error) {
+    console.error('Error generating batch embeddings:', error);
+    throw new Error('Gagal membuat embedding dokumen dalam batch.');
   }
-  return embeddings;
 }
+
