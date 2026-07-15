@@ -1,11 +1,6 @@
-import {
-  pipeline,
-  env,
-  type TextClassificationPipeline,
-} from "@huggingface/transformers";
-import { searchPdfChunks } from "./database.js";
-import { embedText } from "./embeddings.js";
-import type { RetrievedPdfChunk } from "../types/index.js";
+import { searchPdfChunks } from './database.js';
+import { embedText } from './embeddings.js';
+import type { RetrievedPdfChunk } from '../types/index.js';
 
 interface RetrievePdfContextInput {
   prompt: string;
@@ -13,59 +8,37 @@ interface RetrievePdfContextInput {
   limit?: number;
 }
 
-// Skip model download checks
-env.allowLocalModels = false;
-env.useBrowserCache = true;
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
 
-let rerankerPipeline: TextClassificationPipeline | null = null;
-
-async function getRerankerPipeline(): Promise<TextClassificationPipeline> {
-  if (!rerankerPipeline) {
-    rerankerPipeline = await pipeline(
-      "text-classification",
-      "Xenova/bge-reranker-v2-m3",
-      {
-        device: "cpu",
-        dtype: "q4",
-      },
-    );
-  }
-  return rerankerPipeline;
-}
-
-async function rerankChunks(
-  query: string,
-  chunks: RetrievedPdfChunk[],
-): Promise<RetrievedPdfChunk[]> {
+async function rerankChunks(query: string, chunks: RetrievedPdfChunk[]): Promise<RetrievedPdfChunk[]> {
   if (chunks.length === 0) return [];
 
   try {
-    const reranker = await getRerankerPipeline();
-
-    // Pass pairs as array of { text, text_pair } objects
-    // TypeScript types may not fully support this, but runtime should work
-    const pairs = chunks.map((chunk) => ({
-      text: query,
-      text_pair: chunk.chunkText,
-    }));
-    // @ts-expect-error - transformers.js supports text_pair at runtime even if types lag
-    const results = await reranker(pairs);
-
-    // results is array of { label: string, score: number } for each pair
-    const scores = results.map((r) => {
-      return typeof r.score === "number" ? r.score : 0;
+    const passages = chunks.map(chunk => chunk.chunkText);
+    const response = await fetch(`${PYTHON_SERVICE_URL}/rerank`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, passages }),
     });
 
-    // Pair chunks with new reranker scores
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn(`Reranker failed (status: ${response.status}): ${errorText}. Falling back to dense scores.`);
+      return chunks;
+    }
+
+    const data = (await response.json()) as { scores: number[] };
+
     const reranked = chunks.map((chunk, index) => ({
       ...chunk,
-      score: scores[index] ?? chunk.score,
+      score: data.scores[index] ?? chunk.score,
     }));
 
-    // Sort by reranker score descending
     return reranked.sort((a, b) => b.score - a.score);
   } catch (error) {
-    console.warn(`Reranker failed: ${error}. Falling back to dense scores.`);
+    console.error('Error during reranking:', error);
     return chunks;
   }
 }
@@ -79,7 +52,6 @@ export async function retrievePdfChunks({
 
   const promptEmbedding = await embedText(prompt);
 
-  // Fetch more candidates (3x) for reranking
   const candidateLimit = Math.max(limit * 3, 25);
 
   const initialChunks = await searchPdfChunks({
@@ -88,33 +60,29 @@ export async function retrievePdfChunks({
     limit: candidateLimit,
   });
 
-  // Rerank using BGE-Reranker
   const rerankedChunks = await rerankChunks(prompt, initialChunks);
 
-  // Return only the top N
   return rerankedChunks.slice(0, limit);
 }
 
 export function formatRetrievedPdfContext(chunks: RetrievedPdfChunk[]): string {
-  if (chunks.length === 0) return "";
+  if (chunks.length === 0) return '';
 
   return chunks
     .map((chunk, index) =>
       [
         `[Sumber PDF ${index + 1}]`,
         `Dokumen: ${chunk.documentName}`,
-        `Halaman: ${chunk.pageNumber ?? "-"}`,
+        `Halaman: ${chunk.pageNumber ?? '-'}`,
         `Chunk: ${chunk.chunkIndex}`,
         `Skor relevansi: ${chunk.score.toFixed(4)}`,
         chunk.chunkText,
-      ].join("\n"),
+      ].join('\n'),
     )
-    .join("\n\n---\n\n");
+    .join('\n\n---\n\n');
 }
 
-export async function retrievePdfContext(
-  input: RetrievePdfContextInput,
-): Promise<string> {
+export async function retrievePdfContext(input: RetrievePdfContextInput): Promise<string> {
   const chunks = await retrievePdfChunks(input);
   return formatRetrievedPdfContext(chunks);
 }
