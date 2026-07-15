@@ -1,3 +1,4 @@
+import { pipeline, env, type TextClassificationPipeline } from '@huggingface/transformers';
 import { searchPdfChunks } from './database.js';
 import { embedText } from './embeddings.js';
 import type { RetrievedPdfChunk } from '../types/index.js';
@@ -8,40 +9,50 @@ interface RetrievePdfContextInput {
   limit?: number;
 }
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+// Skip model download checks
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+let rerankerPipeline: TextClassificationPipeline | null = null;
+
+async function getRerankerPipeline(): Promise<TextClassificationPipeline> {
+  if (!rerankerPipeline) {
+    rerankerPipeline = await pipeline('text-classification', 'Xenova/bge-reranker-v2-m3', {
+      device: 'cpu',
+      dtype: 'q4',
+    });
+  }
+  return rerankerPipeline;
+}
 
 async function rerankChunks(query: string, chunks: RetrievedPdfChunk[]): Promise<RetrievedPdfChunk[]> {
   if (chunks.length === 0) return [];
-  
+
   try {
+    const reranker = await getRerankerPipeline();
+
     const passages = chunks.map(chunk => chunk.chunkText);
-    const response = await fetch(`${PYTHON_SERVICE_URL}/rerank`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, passages }),
+    const results = await reranker(query, { text_pair: passages });
+
+    // results is array of { label: string, score: number } for each passage
+    // BGE-reranker returns scores that can be converted to probabilities
+    const scores = results.map(r => {
+      // Convert logit-like score to proper probability
+      // Higher is better, typical range: -10 to 10
+      return typeof r.score === 'number' ? r.score : 0;
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn(`Reranker failed (status: ${response.status}): ${errorText}. Falling back to dense scores.`);
-      return chunks;
-    }
-
-    const data = (await response.json()) as { scores: number[] };
-    
-    // Pasangkan kembali chunk dengan skor rerank baru
+    // Pair chunks with new reranker scores
     const reranked = chunks.map((chunk, index) => ({
       ...chunk,
-      score: data.scores[index] ?? chunk.score, // Fallback ke score lama jika ada mismatch index
+      score: scores[index] ?? chunk.score,
     }));
 
-    // Urutkan berdasarkan skor rerank tertinggi
+    // Sort by reranker score descending
     return reranked.sort((a, b) => b.score - a.score);
   } catch (error) {
-    console.error('Error during reranking:', error);
-    return chunks; // Fallback ke hasil dense search jika service mati / error
+    console.warn(`Reranker failed: ${error}. Falling back to dense scores.`);
+    return chunks;
   }
 }
 
@@ -54,7 +65,7 @@ export async function retrievePdfChunks({
 
   const promptEmbedding = await embedText(prompt);
 
-  // Ambil kandidat lebih banyak (e.g., 25 chunk) untuk di-rerank
+  // Fetch more candidates (3x) for reranking
   const candidateLimit = Math.max(limit * 3, 25);
 
   const initialChunks = await searchPdfChunks({
@@ -63,10 +74,10 @@ export async function retrievePdfChunks({
     limit: candidateLimit,
   });
 
-  // Jalankan Reranking menggunakan BGE-Reranker via Python service
+  // Rerank using BGE-Reranker
   const rerankedChunks = await rerankChunks(prompt, initialChunks);
 
-  // Kembalikan hanya sejumlah limit
+  // Return only the top N
   return rerankedChunks.slice(0, limit);
 }
 
@@ -91,4 +102,3 @@ export async function retrievePdfContext(input: RetrievePdfContextInput): Promis
   const chunks = await retrievePdfChunks(input);
   return formatRetrievedPdfContext(chunks);
 }
-
