@@ -1,22 +1,27 @@
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+import { pipeline, env, type FeatureExtractionPipeline } from '@huggingface/transformers';
+
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+let embeddingPipeline: FeatureExtractionPipeline | null = null;
+
+async function getEmbeddingPipeline(): Promise<FeatureExtractionPipeline> {
+  if (!embeddingPipeline) {
+    embeddingPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      device: 'cpu',
+    });
+  }
+  return embeddingPipeline;
+}
 
 export async function embedText(text: string): Promise<number[]> {
   try {
-    const response = await fetch(`${PYTHON_SERVICE_URL}/embed`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
+    const extractor = await getEmbeddingPipeline();
+    const output = await extractor(text, {
+      pooling: 'mean',
+      normalize: true,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Python service error: ${response.status} - ${errorText}`);
-    }
-
-    const data = (await response.json()) as { embedding: number[] };
-    return data.embedding;
+    return output.tolist() as number[];
   } catch (error) {
     console.error('Error generating embedding:', error);
     throw new Error('Gagal membuat embedding dokumen.');
@@ -24,24 +29,27 @@ export async function embedText(text: string): Promise<number[]> {
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
+  if (texts.length === 0) return [];
+
   try {
-    if (texts.length === 0) return [];
+    const extractor = await getEmbeddingPipeline();
+    const results: number[][] = [];
 
-    const response = await fetch(`${PYTHON_SERVICE_URL}/embed/batch`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ texts }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Python service error: ${response.status} - ${errorText}`);
+    for (let i = 0; i < texts.length; i += 32) {
+      const batch = texts.slice(i, i + 32);
+      const batchResults = await Promise.all(
+        batch.map(async (text): Promise<number[]> => {
+          const output = await extractor(text, {
+            pooling: 'mean',
+            normalize: true,
+          });
+          return output.tolist();
+        })
+      );
+      results.push(...batchResults);
     }
 
-    const data = (await response.json()) as { embeddings: number[][] };
-    return data.embeddings;
+    return results;
   } catch (error) {
     console.error('Error generating batch embeddings:', error);
     throw new Error('Gagal membuat embedding dokumen dalam batch.');

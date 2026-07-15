@@ -8,41 +8,6 @@ interface RetrievePdfContextInput {
   limit?: number;
 }
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
-
-async function rerankChunks(query: string, chunks: RetrievedPdfChunk[]): Promise<RetrievedPdfChunk[]> {
-  if (chunks.length === 0) return [];
-
-  try {
-    const passages = chunks.map(chunk => chunk.chunkText);
-    const response = await fetch(`${PYTHON_SERVICE_URL}/rerank`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, passages }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn(`Reranker failed (status: ${response.status}): ${errorText}. Falling back to dense scores.`);
-      return chunks;
-    }
-
-    const data = (await response.json()) as { scores: number[] };
-
-    const reranked = chunks.map((chunk, index) => ({
-      ...chunk,
-      score: data.scores[index] ?? chunk.score,
-    }));
-
-    return reranked.sort((a, b) => b.score - a.score);
-  } catch (error) {
-    console.error('Error during reranking:', error);
-    return chunks;
-  }
-}
-
 export async function retrievePdfChunks({
   prompt,
   documentIds,
@@ -52,17 +17,13 @@ export async function retrievePdfChunks({
 
   const promptEmbedding = await embedText(prompt);
 
-  const candidateLimit = Math.max(limit * 3, 25);
-
   const initialChunks = await searchPdfChunks({
     embedding: promptEmbedding,
     documentIds,
-    limit: candidateLimit,
+    limit,
   });
 
-  const rerankedChunks = await rerankChunks(prompt, initialChunks);
-
-  return rerankedChunks.slice(0, limit);
+  return initialChunks;
 }
 
 export function formatRetrievedPdfContext(chunks: RetrievedPdfChunk[]): string {
