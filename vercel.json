@@ -12,5 +12,6 @@
       "dest": "api/index.ts"
     }
   ],
-  "installCommand": "bun install --legacy-peer-deps --force && bunx prisma generate"
+  "installCommand": "bun install --legacy-peer-deps --force",
+  "buildCommand": "bunx prisma generate && bunx tsc"
 }
