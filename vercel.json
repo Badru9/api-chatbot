@@ -12,6 +12,6 @@
       "dest": "api/index.ts"
     }
   ],
-  "installCommand": "bun install --legacy-peer-deps --force",
-  "buildCommand": "bun run db:generate prisma generate"
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "prisma generate && npm run build"
 }
