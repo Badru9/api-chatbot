@@ -13,5 +13,5 @@
     }
   ],
   "installCommand": "bun install --legacy-peer-deps --force",
-  "buildCommand": "bunx prisma generate && bunx tsc"
+  "buildCommand": "bun run db:generate prisma generate"
 }
