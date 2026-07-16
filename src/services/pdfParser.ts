@@ -1,6 +1,6 @@
-import { PDFParse } from 'pdf-parse';
+import { PDFParse } from "pdf-parse";
 
-import type { PdfPageText } from '../types/index.js';
+import type { PdfPageText } from "../types/index.js";
 
 export async function parsePdfPages(data: Buffer): Promise<PdfPageText[]> {
   const parser = new PDFParse({ data });

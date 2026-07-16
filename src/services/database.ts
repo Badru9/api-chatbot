@@ -1,13 +1,16 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
-import type { PdfChunk, RetrievedPdfChunk } from '../types/index.js';
+import type { PdfChunk, RetrievedPdfChunk } from "../types/index.js";
 
 const prisma = new PrismaClient();
 
 export { prisma };
 
-export async function insertPdfChunk(chunk: PdfChunk, embedding: number[]): Promise<void> {
-  const vectorStr = `[${embedding.join(',')}]`;
+export async function insertPdfChunk(
+  chunk: PdfChunk,
+  embedding: number[],
+): Promise<void> {
+  const vectorStr = `[${embedding.join(",")}]`;
 
   await prisma.$executeRawUnsafe(
     `INSERT INTO vectors (
@@ -27,9 +30,12 @@ export async function insertPdfChunk(chunk: PdfChunk, embedding: number[]): Prom
   );
 }
 
-export async function replacePdfChunks(chunks: PdfChunk[], embeddings: number[][]): Promise<void> {
+export async function replacePdfChunks(
+  chunks: PdfChunk[],
+  embeddings: number[][],
+): Promise<void> {
   if (chunks.length !== embeddings.length) {
-    throw new Error('Jumlah chunk dan embedding tidak sama.');
+    throw new Error("Jumlah chunk dan embedding tidak sama.");
   }
 
   if (chunks.length === 0) return;
@@ -43,7 +49,7 @@ export async function replacePdfChunks(chunks: PdfChunk[], embeddings: number[][
 
 export async function deleteDocumentChunks(documentId: string): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'DELETE FROM vectors WHERE document_id = $1',
+    "DELETE FROM vectors WHERE document_id = $1",
     documentId,
   );
 }
@@ -59,8 +65,8 @@ export async function searchPdfChunks({
 }): Promise<RetrievedPdfChunk[]> {
   if (documentIds.length === 0) return [];
 
-  const vectorStr = `[${embedding.join(',')}]`;
-  const placeholders = documentIds.map((_, i) => `$${i + 2}`).join(', ');
+  const vectorStr = `[${embedding.join(",")}]`;
+  const placeholders = documentIds.map((_, i) => `$${i + 2}`).join(", ");
 
   const rows = await prisma.$queryRawUnsafe<
     Array<{

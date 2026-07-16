@@ -1,10 +1,10 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from "node:crypto";
 
-import { chunkPdfDocument } from './chunker.js';
-import { deleteDocumentChunks, replacePdfChunks } from './database.js';
-import { embedTexts } from './embeddings.js';
-import { parsePdfPages } from './pdfParser.js';
-import type { PdfDocument } from '../types/index.js';
+import { chunkPdfDocument } from "./chunker.js";
+import { deleteDocumentChunks, replacePdfChunks } from "./database.js";
+import { embedTexts } from "./embeddings.js";
+import { parsePdfPages } from "./pdfParser.js";
+import type { PdfDocument } from "../types/index.js";
 
 const MAX_PDF_SIZE_BYTES = 15 * 1024 * 1024;
 
@@ -15,14 +15,14 @@ export async function ingestPdfBuffer(
   mimeType: string,
 ): Promise<PdfDocument> {
   if (fileSize > MAX_PDF_SIZE_BYTES) {
-    throw new Error('Ukuran PDF maksimal 15 MB.');
+    throw new Error("Ukuran PDF maksimal 15 MB.");
   }
 
-  if (mimeType && mimeType !== 'application/pdf') {
-    throw new Error('File harus berformat PDF.');
+  if (mimeType && mimeType !== "application/pdf") {
+    throw new Error("File harus berformat PDF.");
   }
 
-  const documentHash = createHash('sha256').update(buffer).digest('hex');
+  const documentHash = createHash("sha256").update(buffer).digest("hex");
   const documentId = documentHash || randomUUID();
 
   try {
@@ -35,7 +35,7 @@ export async function ingestPdfBuffer(
     });
 
     if (chunks.length === 0) {
-      throw new Error('PDF tidak memiliki teks yang bisa dibaca.');
+      throw new Error("PDF tidak memiliki teks yang bisa dibaca.");
     }
 
     const embeddings = await embedTexts(chunks.map((c) => c.chunkText));
@@ -45,7 +45,7 @@ export async function ingestPdfBuffer(
       id: documentId,
       name: fileName,
       size: fileSize,
-      type: mimeType || 'application/pdf',
+      type: mimeType || "application/pdf",
       uploadedAt: Date.now(),
       chunksCount: chunks.length,
     };

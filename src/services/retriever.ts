@@ -17,11 +17,13 @@ export async function retrievePdfChunks({
 
   const promptEmbedding = await embedText(prompt);
 
-  return searchPdfChunks({
+  const initialChunks = await searchPdfChunks({
     embedding: promptEmbedding,
     documentIds,
     limit,
   });
+
+  return initialChunks;
 }
 
 export function formatRetrievedPdfContext(chunks: RetrievedPdfChunk[]): string {
@@ -38,7 +40,7 @@ export function formatRetrievedPdfContext(chunks: RetrievedPdfChunk[]): string {
         chunk.chunkText,
       ].join('\n'),
     )
-    .join('\n\n---\n\\n');
+    .join('\n\n---\n\n');
 }
 
 export async function retrievePdfContext(input: RetrievePdfContextInput): Promise<string> {

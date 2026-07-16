@@ -1,4 +1,4 @@
-import type { PdfChunk, PdfPageText } from '../types/index.js';
+import type { PdfChunk, PdfPageText } from "../types/index.js";
 
 const DEFAULT_MAX_CHARS = 1800;
 const DEFAULT_OVERLAP_CHARS = 250;
@@ -16,10 +16,18 @@ export function estimateTokenCount(text: string): number {
 }
 
 function normalizeText(text: string): string {
-  return text.replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  return text
+    .replace(/\r/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
-function splitText(text: string, maxChars = DEFAULT_MAX_CHARS, overlapChars = DEFAULT_OVERLAP_CHARS) {
+function splitText(
+  text: string,
+  maxChars = DEFAULT_MAX_CHARS,
+  overlapChars = DEFAULT_OVERLAP_CHARS,
+) {
   const normalized = normalizeText(text);
   if (!normalized) return [];
 
@@ -29,8 +37,14 @@ function splitText(text: string, maxChars = DEFAULT_MAX_CHARS, overlapChars = DE
   while (start < normalized.length) {
     const hardEnd = Math.min(start + maxChars, normalized.length);
     const slice = normalized.slice(start, hardEnd);
-    const softBreak = Math.max(slice.lastIndexOf('\n\n'), slice.lastIndexOf('. '));
-    const end = hardEnd === normalized.length || softBreak < maxChars * 0.55 ? hardEnd : start + softBreak + 1;
+    const softBreak = Math.max(
+      slice.lastIndexOf("\n\n"),
+      slice.lastIndexOf(". "),
+    );
+    const end =
+      hardEnd === normalized.length || softBreak < maxChars * 0.55
+        ? hardEnd
+        : start + softBreak + 1;
     const chunk = normalized.slice(start, end).trim();
 
     if (chunk) chunks.push(chunk);
@@ -55,7 +69,7 @@ export function chunkPdfDocument(input: ChunkDocumentInput): PdfChunk[] {
       chunkText,
       tokenCount: estimateTokenCount(chunkText),
       metadata: {
-        parser: 'pdf-parse',
+        parser: "pdf-parse",
       },
     })),
   );
