@@ -15,7 +15,6 @@
   "dependencies": {
     "@better-auth/infra": "^0.2.14",
     "@better-auth/prisma-adapter": "^1.1.18",
-    "@huggingface/transformers": "^4.2.0",
     "@prisma/client": "^6.9.0",
     "better-auth": "^1.1.18",
     "cors": "^2.8.5",
