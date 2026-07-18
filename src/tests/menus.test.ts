@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import express from 'express';
+const express = require('express');
 // @ts-ignore
-import menusRouter from '../routes/menus.js';
-import { prisma } from '../services/database.js';
+const menusRouter = require('../routes/menus');
+const { prisma } = require('../services/database');
 
 test('Menus API TDD tests', async (t) => {
   // Clean up any existing test menus
@@ -22,12 +22,12 @@ test('Menus API TDD tests', async (t) => {
 
   const app = express();
   app.use(express.json());
-  
+
   // Mount the menus router directly for integration testing
   // In the test, we mock req.session to simulate logged-in admin/dosen
-  app.use((req, res, next) => {
+  app.use((req: any, res: any, next: any) => {
     // Default to test-admin session
-    (req as any).session = {
+    req.session = {
       user: {
         id: 'test-admin-id',
         role: 'admin',

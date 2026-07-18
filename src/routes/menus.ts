@@ -1,11 +1,11 @@
-import { Router, Request, Response } from "express";
-import { requireAuth } from "../middleware/requireAuth.js";
-import { requireAdmin } from "../middleware/requireAdmin.js";
-import { prisma } from "../services/database.js";
+const { Router } = require("express");
+const { requireAuth } = require("../middleware/requireAuth");
+const { requireAdmin } = require("../middleware/requireAdmin");
+const { prisma } = require("../services/database");
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req: any, res: any) => {
   try {
     const menus = await prisma.portalMenu.findMany({
       orderBy: { order: "asc" },
@@ -25,7 +25,7 @@ router.post(
   "/",
   requireAuth,
   requireAdmin,
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { title, description, icon, href, visibleToRoles, order } =
         req.body;
@@ -80,7 +80,7 @@ router.put(
   "/:id",
   requireAuth,
   requireAdmin,
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const id = req.params.id as string;
       const { title, description, icon, href, visibleToRoles, order } =
@@ -126,7 +126,7 @@ router.delete(
   "/:id",
   requireAuth,
   requireAdmin,
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const id = req.params.id as string;
 
@@ -157,7 +157,7 @@ router.put(
   "/reorder",
   requireAuth,
   requireAdmin,
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { reorders } = req.body; // Array of { id: string, order: number }
 
@@ -167,7 +167,7 @@ router.put(
       }
 
       await prisma.$transaction(
-        reorders.map((item) =>
+        reorders.map((item: any) =>
           prisma.portalMenu.update({
             where: { id: item.id },
             data: { order: item.order },
@@ -187,4 +187,4 @@ router.put(
   },
 );
 
-export default router;
+module.exports = router;

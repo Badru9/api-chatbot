@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import express from 'express';
+const express = require('express');
 // @ts-ignore
-import documentsRouter from '../routes/documents.js';
-import { prisma } from '../services/database.js';
+const documentsRouter = require('../routes/documents');
+const { prisma } = require('../services/database');
 
 test('Documents API TDD tests', async (t) => {
   // Cleanup test documents from database first
@@ -19,8 +19,8 @@ test('Documents API TDD tests', async (t) => {
   app.use(express.json());
 
   // Mock session untuk otentikasi admin
-  app.use((req, res, next) => {
-    (req as any).session = {
+  app.use((req: any, res: any, next: any) => {
+    req.session = {
       user: {
         id: 'test-admin-id',
         role: 'admin',

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -17,3 +17,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+export {};

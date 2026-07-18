@@ -1,5 +1,5 @@
-import { auth } from './services/auth.js';
-import { PrismaClient } from '@prisma/client';
+const { auth } = require('./services/auth');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -113,3 +113,5 @@ async function seed() {
 }
 
 seed();
+
+export {};

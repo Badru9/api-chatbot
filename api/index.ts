@@ -1,19 +1,17 @@
-/**
- * Vercel serverless entry point.
- * Wraps Express app as a handler function.
- *
- * ⚠️ ponytail: This is the lazy bridge. Ideal: migrate to Next.js API routes.
- *    Works fine for now — Express on Vercel via this pattern is battle-tested.
- */
+// Vercel serverless entry point.
+// Wraps Express app as a handler function.
+//
+// ⚠️ ponytail: This is the lazy bridge. Ideal: migrate to Next.js API routes.
+//    Works fine for now — Express on Vercel via this pattern is battle-tested.
 
-import cors from "cors";
-import express from "express";
-import { toNodeHandler } from "better-auth/node";
-import { auth } from "../src/services/auth.js";
+const cors = require("cors");
+const express = require("express");
+const { toNodeHandler } = require("better-auth/node");
+const { auth } = require("../src/services/auth");
 
-import chatRoutes from "../src/routes/chat.js";
-import documentRoutes from "../src/routes/documents.js";
-import menuRoutes from "../src/routes/menus.js";
+const chatRoutes = require("../src/routes/chat");
+const documentRoutes = require("../src/routes/documents");
+const menuRoutes = require("../src/routes/menus");
 
 const app = express();
 
@@ -35,9 +33,9 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/menus", menuRoutes);
 
-app.get("/health", (_req, res) => {
+app.get("/health", (_req: any, res: any) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // Vercel expects a default export — Express handles it
-export default app;
+module.exports = app;

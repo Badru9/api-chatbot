@@ -2,10 +2,10 @@
   "name": "api-chatbot",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'tsx src/index.ts'",
     "build": "prisma generate && tsc",
+    "postinstall": "prisma generate",
     "start": "node dist/index.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -16,20 +16,25 @@
   "dependencies": {
     "@better-auth/infra": "^0.2.14",
     "@better-auth/prisma-adapter": "^1.1.18",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^6.9.0",
     "better-auth": "^1.1.18",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "multer": "^2.0.1",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.2",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.15.0",
+    "@types/pg": "^8.20.0",
+    "nodemon": "^3.1.14",
     "prisma": "^6.9.0",
-    "tsx": "^4.19.0",
+    "tsx": "^4.23.1",
     "typescript": "^5.8.0"
   }
 }

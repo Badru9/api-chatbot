@@ -1,7 +1,7 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "@better-auth/prisma-adapter";
-import { prisma } from "./database.js";
-import { dash } from "@better-auth/infra";
+const { betterAuth } = require("better-auth");
+const { prismaAdapter } = require("@better-auth/prisma-adapter");
+const { prisma } = require("./database");
+const { dash } = require("@better-auth/infra");
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
