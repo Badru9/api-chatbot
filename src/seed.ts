@@ -1,4 +1,4 @@
-import { auth } from "./services/auth";
+import { auth } from "./services/auth.js";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();

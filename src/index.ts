@@ -1,11 +1,11 @@
 import cors from "cors";
 import express from "express";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "./services/auth";
+import { auth } from "./services/auth.js";
 
-import chatRoutes from "./routes/chat";
-import documentRoutes from "./routes/documents";
-import menuRoutes from "./routes/menus";
+import chatRoutes from "./routes/chat.js";
+import documentRoutes from "./routes/documents.js";
+import menuRoutes from "./routes/menus.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import multer from 'multer';
 
-import { requireAuth } from '../middleware/requireAuth';
-import { requireAdmin } from '../middleware/requireAdmin';
-import { deleteDocumentChunks, prisma } from '../services/database';
-import { ingestPdfBuffer } from '../services/ingestion';
+import { requireAuth } from '../middleware/requireAuth.js';
+import { requireAdmin } from '../middleware/requireAdmin.js';
+import { deleteDocumentChunks, prisma } from '../services/database.js';
+import { ingestPdfBuffer } from '../services/ingestion.js';
 
 const router = Router();
 // Pastikan semua endpoint memerlukan otentikasi admin
