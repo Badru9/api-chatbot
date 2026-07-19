@@ -1,5 +1,5 @@
-const { fromNodeHeaders } = require("better-auth/node");
-const { auth } = require("../services/auth");
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../services/auth";
 
 export const requireAdmin = async (req: any, res: any, next: any) => {
   const session = req.session || await auth.api.getSession({
