@@ -1,4 +1,18 @@
-import type { PdfChunk, PdfPageText } from "../types/index.js";
+interface PdfChunk {
+  documentId: string;
+  documentName: string;
+  documentHash: string;
+  pageNumber: number | null;
+  chunkIndex: number;
+  chunkText: string;
+  tokenCount: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface PdfPageText {
+  pageNumber: number;
+  text: string;
+}
 
 const DEFAULT_MAX_CHARS = 1800;
 const DEFAULT_OVERLAP_CHARS = 250;

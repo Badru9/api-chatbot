@@ -1,11 +1,11 @@
-import { Router, Request, Response } from "express";
-import { requireAuth } from "../middleware/requireAuth.js";
-import { requireAdmin } from "../middleware/requireAdmin.js";
-import { prisma } from "../services/database.js";
+import { Router } from "express";
+import { requireAuth } from "../middleware/requireAuth";
+import { requireAdmin } from "../middleware/requireAdmin";
+import { prisma } from "../services/database";
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req: any, res: any) => {
   try {
     const menus = await prisma.portalMenu.findMany({
       orderBy: { order: "asc" },
@@ -21,143 +21,125 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // POST create a new menu (requires admin)
-router.post(
-  "/",
-  requireAuth,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { title, description, icon, href, visibleToRoles, order } =
-        req.body;
-      const session = (req as any).session;
+router.post("/", requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const { title, description, icon, href, visibleToRoles, order } = req.body;
+    const session = (req as any).session;
 
-      if (
-        !title ||
-        !description ||
-        !icon ||
-        !href ||
-        !Array.isArray(visibleToRoles)
-      ) {
-        res.status(400).json({
-          error:
-            "Kolom title, description, icon, href, dan visibleToRoles wajib diisi.",
-        });
-        return;
-      }
-
-      let menuOrder = typeof order === "number" ? order : 0;
-      if (typeof order !== "number") {
-        const lastMenu = await prisma.portalMenu.findFirst({
-          orderBy: { order: "desc" },
-        });
-        menuOrder = lastMenu ? lastMenu.order + 1 : 1;
-      }
-
-      const menu = await prisma.portalMenu.create({
-        data: {
-          title,
-          description,
-          icon,
-          href,
-          visibleToRoles,
-          order: menuOrder,
-          createdBy: session?.user?.id || "admin",
-        },
-      });
-
-      res.status(201).json(menu);
-    } catch (error) {
-      res.status(500).json({
+    if (
+      !title ||
+      !description ||
+      !icon ||
+      !href ||
+      !Array.isArray(visibleToRoles)
+    ) {
+      res.status(400).json({
         error:
-          error instanceof Error ? error.message : "Gagal membuat menu baru.",
+          "Kolom title, description, icon, href, dan visibleToRoles wajib diisi.",
       });
+      return;
     }
-  },
-);
+
+    let menuOrder = typeof order === "number" ? order : 0;
+    if (typeof order !== "number") {
+      const lastMenu = await prisma.portalMenu.findFirst({
+        orderBy: { order: "desc" },
+      });
+      menuOrder = lastMenu ? lastMenu.order + 1 : 1;
+    }
+
+    const menu = await prisma.portalMenu.create({
+      data: {
+        title,
+        description,
+        icon,
+        href,
+        visibleToRoles,
+        order: menuOrder,
+        createdBy: session?.user?.id || "admin",
+      },
+    });
+
+    res.status(201).json(menu);
+  } catch (error) {
+    res.status(500).json({
+      error:
+        error instanceof Error ? error.message : "Gagal membuat menu baru.",
+    });
+  }
+});
 
 // PUT update a menu (requires admin)
-router.put(
-  "/:id",
-  requireAuth,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const id = req.params.id as string;
-      const { title, description, icon, href, visibleToRoles, order } =
-        req.body;
+router.put("/:id", requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const id = req.params.id as string;
+    const { title, description, icon, href, visibleToRoles, order } = req.body;
 
-      const existing = await prisma.portalMenu.findUnique({
-        where: { id },
-      });
+    const existing = await prisma.portalMenu.findUnique({
+      where: { id },
+    });
 
-      if (!existing) {
-        res.status(404).json({ error: "Menu tidak ditemukan." });
-        return;
-      }
-
-      const updated = await prisma.portalMenu.update({
-        where: { id },
-        data: {
-          title: title !== undefined ? title : existing.title,
-          description:
-            description !== undefined ? description : existing.description,
-          icon: icon !== undefined ? icon : existing.icon,
-          href: href !== undefined ? href : existing.href,
-          visibleToRoles:
-            visibleToRoles !== undefined
-              ? visibleToRoles
-              : existing.visibleToRoles,
-          order: order !== undefined ? order : existing.order,
-        },
-      });
-
-      res.json(updated);
-    } catch (error) {
-      res.status(500).json({
-        error:
-          error instanceof Error ? error.message : "Gagal memperbarui menu.",
-      });
+    if (!existing) {
+      res.status(404).json({ error: "Menu tidak ditemukan." });
+      return;
     }
-  },
-);
+
+    const updated = await prisma.portalMenu.update({
+      where: { id },
+      data: {
+        title: title !== undefined ? title : existing.title,
+        description:
+          description !== undefined ? description : existing.description,
+        icon: icon !== undefined ? icon : existing.icon,
+        href: href !== undefined ? href : existing.href,
+        visibleToRoles:
+          visibleToRoles !== undefined
+            ? visibleToRoles
+            : existing.visibleToRoles,
+        order: order !== undefined ? order : existing.order,
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Gagal memperbarui menu.",
+    });
+  }
+});
 
 // DELETE a menu (requires admin)
-router.delete(
-  "/:id",
-  requireAuth,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const id = req.params.id as string;
+router.delete("/:id", requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const id = req.params.id as string;
 
-      const existing = await prisma.portalMenu.findUnique({
-        where: { id },
-      });
+    const existing = await prisma.portalMenu.findUnique({
+      where: { id },
+    });
 
-      if (!existing) {
-        res.status(404).json({ error: "Menu tidak ditemukan." });
-        return;
-      }
-
-      await prisma.portalMenu.delete({
-        where: { id },
-      });
-
-      res.json({ message: "Menu berhasil dihapus." });
-    } catch (error) {
-      res.status(500).json({
-        error: error instanceof Error ? error.message : "Gagal menghapus menu.",
-      });
+    if (!existing) {
+      res.status(404).json({ error: "Menu tidak ditemukan." });
+      return;
     }
-  },
-);
+
+    await prisma.portalMenu.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Menu berhasil dihapus." });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Gagal menghapus menu.",
+    });
+  }
+});
 
 // PUT reorder multiple menus (requires admin)
 router.put(
   "/reorder",
   requireAuth,
   requireAdmin,
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { reorders } = req.body; // Array of { id: string, order: number }
 
@@ -167,7 +149,7 @@ router.put(
       }
 
       await prisma.$transaction(
-        reorders.map((item) =>
+        reorders.map((item: any) =>
           prisma.portalMenu.update({
             where: { id: item.id },
             data: { order: item.order },
@@ -187,4 +169,4 @@ router.put(
   },
 );
 
-export default router;
+module.exports = router;

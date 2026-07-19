@@ -1,6 +1,24 @@
 import { PrismaClient } from "@prisma/client";
 
-import type { PdfChunk, RetrievedPdfChunk } from "../types/index.js";
+interface PdfChunk {
+  documentId: string;
+  documentName: string;
+  documentHash: string;
+  pageNumber: number | null;
+  chunkIndex: number;
+  chunkText: string;
+  tokenCount: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface RetrievedPdfChunk {
+  documentId: string;
+  documentName: string;
+  pageNumber: number | null;
+  chunkIndex: number;
+  chunkText: string;
+  score: number;
+}
 
 const prisma = new PrismaClient();
 
@@ -93,7 +111,7 @@ export async function searchPdfChunks({
     ...documentIds,
   );
 
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     documentId: row.document_id,
     documentName: row.document_name,
     pageNumber: row.page_number,

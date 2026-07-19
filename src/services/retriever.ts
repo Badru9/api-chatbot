@@ -1,6 +1,14 @@
-import { searchPdfChunks } from './database.js';
-import { embedText } from './embeddings.js';
-import type { RetrievedPdfChunk } from '../types/index.js';
+const { searchPdfChunks } = require("./database");
+const { embedText } = require("./embeddings");
+
+interface RetrievedPdfChunk {
+  documentId: string;
+  documentName: string;
+  pageNumber: number | null;
+  chunkIndex: number;
+  chunkText: string;
+  score: number;
+}
 
 interface RetrievePdfContextInput {
   prompt: string;
@@ -30,7 +38,7 @@ export function formatRetrievedPdfContext(chunks: RetrievedPdfChunk[]): string {
   if (chunks.length === 0) return '';
 
   return chunks
-    .map((chunk, index) =>
+    .map((chunk: any, index: number) =>
       [
         `[Sumber PDF ${index + 1}]`,
         `Dokumen: ${chunk.documentName}`,

@@ -1,4 +1,4 @@
-import { auth } from './services/auth.js';
+const { auth } = require('./services/auth');
 
 async function main() {
   console.log('Testing admin login...');
@@ -29,3 +29,5 @@ async function main() {
 }
 
 main().catch(console.error);
+
+export {};

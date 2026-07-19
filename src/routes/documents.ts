@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import multer from 'multer';
 
-import { requireAuth } from '../middleware/requireAuth.js';
-import { requireAdmin } from '../middleware/requireAdmin.js';
-import { deleteDocumentChunks, prisma } from '../services/database.js';
-import { ingestPdfBuffer } from '../services/ingestion.js';
+import { requireAuth } from '../middleware/requireAuth';
+import { requireAdmin } from '../middleware/requireAdmin';
+import { deleteDocumentChunks, prisma } from '../services/database';
+import { ingestPdfBuffer } from '../services/ingestion';
 
 const router = Router();
 // Pastikan semua endpoint memerlukan otentikasi admin
@@ -14,7 +14,7 @@ router.use(requireAdmin);
 const upload = multer({ storage: multer.memoryStorage() });
 
 // GET list all documents
-router.get('/', async (req, res) => {
+router.get('/', async (req: any, res: any) => {
   try {
     const rawDocs = await prisma.pdfChunk.groupBy({
       by: ['documentId', 'documentName'],
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
       },
     });
 
-    const documents = rawDocs.map((doc) => ({
+    const documents = rawDocs.map((doc: any) => ({
       id: doc.documentId,
       name: doc.documentName,
       chunkCount: doc._count.id,
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     }));
 
     // Urutkan berdasarkan waktu unggah terbaru
-    documents.sort((a, b) => {
+    documents.sort((a: any, b: any) => {
       const dateA = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
       const dateB = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
       return dateB - dateA;
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST upload PDF
-router.post('/', upload.single('file'), async (req, res) => {
+router.post('/', upload.single('file'), async (req: any, res: any) => {
   try {
     const file = req.file;
 
@@ -74,7 +74,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 });
 
 // DELETE chunks
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: any, res: any) => {
   const documentId = req.params.id;
 
   if (!documentId || !documentId.trim()) {
@@ -92,4 +92,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/requireAuth.js';
-import { retrievePdfContext } from '../services/retriever.js';
+import { requireAuth } from '../middleware/requireAuth';
+import { retrievePdfContext } from '../services/retriever';
 
 const router = Router();
 router.use(requireAuth);
@@ -10,7 +10,7 @@ function buildSystemInstruction(): string {
   return "Anda adalah mb.ai, asisten AI akademik yang membantu dosen di universitas. Berikan jawaban yang akurat, informatif, dan profesional.";
 }
 
-router.post('/context', async (req, res) => {
+router.post('/context', async (req: any, res: any) => {
   try {
     const { prompt, documentIds, limit } = req.body;
 
@@ -20,7 +20,7 @@ router.post('/context', async (req, res) => {
     }
 
     const ids = Array.isArray(documentIds)
-      ? documentIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0)
+      ? documentIds.filter((id: unknown): id is string => typeof id === 'string' && (id as string).trim().length > 0)
       : [];
 
     const context = await retrievePdfContext({
@@ -37,7 +37,7 @@ router.post('/context', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', async (req: any, res: any) => {
   try {
     const { prompt, documentIds, messages } = req.body;
 
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
     }
 
     const ids = Array.isArray(documentIds)
-      ? documentIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0)
+      ? documentIds.filter((id: unknown): id is string => typeof id === 'string' && (id as string).trim().length > 0)
       : [];
 
     // 1. Get PDF Context
@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
     }
 
     // 2. Build RAG prompt
-    const finalUserPrompt = pdfContext 
+    const finalUserPrompt = pdfContext
       ? `Gunakan informasi dokumen berikut untuk menjawab pertanyaan.\n\n[DOKUMEN CONTEXT]\n${pdfContext}\n\n[PERTANYAAN]\n${prompt.trim()}`
       : prompt.trim();
 
@@ -153,7 +153,7 @@ router.post('/', async (req, res) => {
         if (content) {
           res.write(content);
         }
-      } catch {}
+      } catch { }
     }
 
     res.end();
@@ -163,4 +163,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

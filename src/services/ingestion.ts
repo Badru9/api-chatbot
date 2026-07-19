@@ -1,10 +1,18 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { chunkPdfDocument } from "./chunker.js";
-import { deleteDocumentChunks, replacePdfChunks } from "./database.js";
-import { embedTexts } from "./embeddings.js";
-import { parsePdfPages } from "./pdfParser.js";
-import type { PdfDocument } from "../types/index.js";
+import { chunkPdfDocument } from "./chunker";
+import { deleteDocumentChunks, replacePdfChunks } from "./database";
+import { embedTexts } from "./embeddings";
+import { parsePdfPages } from "./pdfParser";
+
+interface PdfDocument {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: number;
+  chunksCount: number;
+}
 
 const MAX_PDF_SIZE_BYTES = 15 * 1024 * 1024;
 
@@ -38,7 +46,7 @@ export async function ingestPdfBuffer(
       throw new Error("PDF tidak memiliki teks yang bisa dibaca.");
     }
 
-    const embeddings = await embedTexts(chunks.map((c) => c.chunkText));
+    const embeddings = await embedTexts(chunks.map((c: any) => c.chunkText));
     await replacePdfChunks(chunks, embeddings);
 
     return {
