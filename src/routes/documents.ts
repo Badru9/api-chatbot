@@ -1,10 +1,10 @@
-const { Router } = require('express');
-const multer = require('multer');
+import { Router } from 'express';
+import multer from 'multer';
 
-const { requireAuth } = require('../middleware/requireAuth');
-const { requireAdmin } = require('../middleware/requireAdmin');
-const { deleteDocumentChunks, prisma } = require('../services/database');
-const { ingestPdfBuffer } = require('../services/ingestion');
+import { requireAuth } from '../middleware/requireAuth';
+import { requireAdmin } from '../middleware/requireAdmin';
+import { deleteDocumentChunks, prisma } from '../services/database';
+import { ingestPdfBuffer } from '../services/ingestion';
 
 const router = Router();
 // Pastikan semua endpoint memerlukan otentikasi admin

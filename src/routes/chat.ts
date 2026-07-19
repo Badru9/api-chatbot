@@ -1,6 +1,6 @@
-const { Router } = require('express');
-const { requireAuth } = require('../middleware/requireAuth');
-const { retrievePdfContext } = require('../services/retriever');
+import { Router } from 'express';
+import { requireAuth } from '../middleware/requireAuth';
+import { retrievePdfContext } from '../services/retriever';
 
 const router = Router();
 router.use(requireAuth);
@@ -153,7 +153,7 @@ router.post('/', async (req: any, res: any) => {
         if (content) {
           res.write(content);
         }
-      } catch {}
+      } catch { }
     }
 
     res.end();
