@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { auth } from '../services/auth';
+import { auth } from '../services/auth.js';
 
 test('Auth service should be initialized correctly', () => {
   assert.ok(auth);

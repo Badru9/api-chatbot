@@ -1,5 +1,5 @@
 import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../services/auth";
+import { auth } from "../services/auth.js";
 
 export const requireAuth = async (req: any, res: any, next: any) => {
   const session =

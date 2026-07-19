@@ -7,11 +7,11 @@
 import cors from "cors";
 import express from "express";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "../src/services/auth";
+import { auth } from "../src/services/auth.js";
 
-import chatRoutes from "../src/routes/chat";
-import documentRoutes from "../src/routes/documents";
-import menuRoutes from "../src/routes/menus";
+import chatRoutes from "../src/routes/chat.js";
+import documentRoutes from "../src/routes/documents.js";
+import menuRoutes from "../src/routes/menus.js";
 
 const app = express();
 

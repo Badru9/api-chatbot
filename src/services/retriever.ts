@@ -1,5 +1,5 @@
-import { searchPdfChunks } from "./database";
-import { embedText } from "./embeddings";
+import { searchPdfChunks } from "./database.js";
+import { embedText } from "./embeddings.js";
 
 interface RetrievedPdfChunk {
   documentId: string;

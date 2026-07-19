@@ -1,9 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import { chunkPdfDocument } from "./chunker";
-import { deleteDocumentChunks, replacePdfChunks } from "./database";
-import { embedTexts } from "./embeddings";
-import { parsePdfPages } from "./pdfParser";
+import { chunkPdfDocument } from "./chunker.js";
+import { deleteDocumentChunks, replacePdfChunks } from "./database.js";
+import { embedTexts } from "./embeddings.js";
+import { parsePdfPages } from "./pdfParser.js";
 
 interface PdfDocument {
   id: string;
