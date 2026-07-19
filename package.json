@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'tsx src/index.ts'",
     "build": "prisma generate && tsc",
