@@ -4,14 +4,14 @@
 // ⚠️ ponytail: This is the lazy bridge. Ideal: migrate to Next.js API routes.
 //    Works fine for now — Express on Vercel via this pattern is battle-tested.
 
-const cors = require("cors");
-const express = require("express");
-const { toNodeHandler } = require("better-auth/node");
-const { auth } = require("../src/services/auth");
+import cors from "cors";
+import express from "express";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "../src/services/auth";
 
-const chatRoutes = require("../src/routes/chat");
-const documentRoutes = require("../src/routes/documents");
-const menuRoutes = require("../src/routes/menus");
+import chatRoutes from "../src/routes/chat";
+import documentRoutes from "../src/routes/documents";
+import menuRoutes from "../src/routes/menus";
 
 const app = express();
 
@@ -38,4 +38,4 @@ app.get("/health", (_req: any, res: any) => {
 });
 
 // Vercel expects a default export — Express handles it
-module.exports = app;
+export default app;

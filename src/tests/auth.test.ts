@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-const { auth } = require('../services/auth');
+import { auth } from '../services/auth';
 
 test('Auth service should be initialized correctly', () => {
   assert.ok(auth);

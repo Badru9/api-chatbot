@@ -1,11 +1,11 @@
-const cors = require("cors");
-const express = require("express");
-const { toNodeHandler } = require("better-auth/node");
-const { auth } = require("./services/auth");
+import cors from "cors";
+import express from "express";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./services/auth";
 
-const chatRoutes = require("./routes/chat");
-const documentRoutes = require("./routes/documents");
-const menuRoutes = require("./routes/menus");
+import chatRoutes from "./routes/chat";
+import documentRoutes from "./routes/documents";
+import menuRoutes from "./routes/menus";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -35,5 +35,3 @@ app.get("/health", (_req: any, res: any) => {
 app.listen(PORT, () => {
   console.log(`[api-chatbot] Server running on http://localhost:${PORT}`);
 });
-
-export {};

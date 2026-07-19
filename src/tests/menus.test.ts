@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert';
-const express = require('express');
+import express from 'express';
 // @ts-ignore
-const menusRouter = require('../routes/menus');
-const { prisma } = require('../services/database');
+import menusRouter from '../routes/menus';
+import { prisma } from '../services/database';
 
 test('Menus API TDD tests', async (t) => {
   // Clean up any existing test menus

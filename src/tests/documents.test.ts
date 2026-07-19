@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert';
-const express = require('express');
+import express from 'express';
 // @ts-ignore
-const documentsRouter = require('../routes/documents');
-const { prisma } = require('../services/database');
+import documentsRouter from '../routes/documents';
+import { prisma } from '../services/database';
 
 test('Documents API TDD tests', async (t) => {
   // Cleanup test documents from database first

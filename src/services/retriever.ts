@@ -1,5 +1,5 @@
-const { searchPdfChunks } = require("./database");
-const { embedText } = require("./embeddings");
+import { searchPdfChunks } from "./database";
+import { embedText } from "./embeddings";
 
 interface RetrievedPdfChunk {
   documentId: string;
