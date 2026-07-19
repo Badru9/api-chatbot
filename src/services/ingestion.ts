@@ -1,9 +1,9 @@
-const { createHash, randomUUID } = require("node:crypto");
+import { createHash, randomUUID } from "node:crypto";
 
-const { chunkPdfDocument } = require("./chunker");
-const { deleteDocumentChunks, replacePdfChunks } = require("./database");
-const { embedTexts } = require("./embeddings");
-const { parsePdfPages } = require("./pdfParser");
+import { chunkPdfDocument } from "./chunker";
+import { deleteDocumentChunks, replacePdfChunks } from "./database";
+import { embedTexts } from "./embeddings";
+import { parsePdfPages } from "./pdfParser";
 
 interface PdfDocument {
   id: string;
