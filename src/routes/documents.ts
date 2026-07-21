@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import multer from 'multer';
+import { Router } from "express";
+import multer from "multer";
 
-import { requireAuth } from '../middleware/requireAuth.js';
-import { requireAdmin } from '../middleware/requireAdmin.js';
-import { deleteDocumentChunks, prisma } from '../services/database.js';
-import { ingestPdfBuffer } from '../services/ingestion.js';
+import { requireAuth } from "../middleware/requireAuth.js";
+import { requireAdmin } from "../middleware/requireAdmin.js";
+import { deleteDocumentChunks, prisma } from "../services/database.js";
+import { ingestPdfBuffer } from "../services/ingestion.js";
 
 const router = Router();
 // Pastikan semua endpoint memerlukan otentikasi admin
@@ -14,10 +14,10 @@ router.use(requireAdmin);
 const upload = multer({ storage: multer.memoryStorage() });
 
 // GET list all documents
-router.get('/', async (req: any, res: any) => {
+router.get("/", async (req: any, res: any) => {
   try {
     const rawDocs = await prisma.pdfChunk.groupBy({
-      by: ['documentId', 'documentName'],
+      by: ["documentId", "documentName"],
       _count: {
         id: true,
       },
@@ -43,18 +43,21 @@ router.get('/', async (req: any, res: any) => {
     res.json(documents);
   } catch (error) {
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Gagal mengambil daftar dokumen.',
+      error:
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil daftar dokumen.",
     });
   }
 });
 
 // POST upload PDF
-router.post('/', upload.single('file'), async (req: any, res: any) => {
+router.post("/", upload.single("file"), async (req: any, res: any) => {
   try {
     const file = req.file;
 
     if (!file) {
-      res.status(400).json({ error: 'Field file wajib diisi.' });
+      res.status(400).json({ error: "Field file wajib diisi." });
       return;
     }
 
@@ -68,17 +71,17 @@ router.post('/', upload.single('file'), async (req: any, res: any) => {
     res.status(201).json({ document });
   } catch (error) {
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Gagal memproses PDF.',
+      error: error instanceof Error ? error.message : "Gagal memproses PDF.",
     });
   }
 });
 
 // DELETE chunks
-router.delete('/:id', async (req: any, res: any) => {
+router.delete("/:id", async (req: any, res: any) => {
   const documentId = req.params.id;
 
   if (!documentId || !documentId.trim()) {
-    res.status(400).json({ error: 'Parameter id wajib diisi.' });
+    res.status(400).json({ error: "Parameter id wajib diisi." });
     return;
   }
 
@@ -87,9 +90,11 @@ router.delete('/:id', async (req: any, res: any) => {
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Gagal menghapus dokumen.',
+      error:
+        error instanceof Error ? error.message : "Gagal menghapus dokumen.",
     });
   }
 });
 
 export default router;
+
