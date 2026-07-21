@@ -15,7 +15,8 @@ router.get("/", async (req: any, res: any) => {
       const defaultMenus = [
         {
           title: "Monitoring Kinerja",
-          description: "Analisis dan evaluasi kinerja akademik dosen secara real-time.",
+          description:
+            "Analisis dan evaluasi kinerja akademik dosen secara real-time.",
           icon: "ChartBar",
           href: "/admin/kinerja",
           order: 1,

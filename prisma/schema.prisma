@@ -30,10 +30,11 @@ model User {
   id            String    @id @default(uuid())
   name          String
   email         String    @unique
-  emailVerified Boolean   @map("email_verified")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  password      String?
   image         String?
-  createdAt     DateTime  @map("created_at")
-  updatedAt     DateTime  @map("updated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
   role          String    @default("dosen") // "admin" atau "dosen"
   sessions      Session[]
   accounts      Account[]

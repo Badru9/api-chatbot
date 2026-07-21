@@ -1,4 +1,4 @@
-import { auth } from "./services/auth.js";
+import { hashPassword } from "./services/auth.js";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -10,24 +10,22 @@ async function seed() {
     const existingAdmin = await prisma.user.findFirst({
       where: { role: "admin" },
     });
+    console.log("Existing admin user:", existingAdmin);
 
     if (existingAdmin) {
       console.log("Admin user already exists:", existingAdmin.email);
     } else {
-      const adminUser = await auth.api.signUpEmail({
-        body: {
+      const passwordHash = await hashPassword("password123");
+      const adminUser = await prisma.user.create({
+        data: {
           email: "admin@mb.ai",
-          password: "password123",
+          password: passwordHash,
           name: "Super Admin",
+          role: "admin",
         },
       });
 
-      await prisma.user.update({
-        where: { id: adminUser.user.id },
-        data: { role: "admin" },
-      });
-
-      console.log("Admin user created successfully: admin@mb.ai / password123");
+      console.log("Admin user created successfully:", adminUser.email);
     }
 
     // 2. Seed Dosen
@@ -39,20 +37,17 @@ async function seed() {
     if (existingDosen) {
       console.log("Dosen user already exists:", existingDosen.email);
     } else {
-      const dosenUser = await auth.api.signUpEmail({
-        body: {
+      const passwordHash = await hashPassword("password123");
+      const dosenUser = await prisma.user.create({
+        data: {
           email: "dosen@mb.ai",
-          password: "password123",
+          password: passwordHash,
           name: "Dr. Budi Dosen",
+          role: "dosen",
         },
       });
 
-      await prisma.user.update({
-        where: { id: dosenUser.user.id },
-        data: { role: "dosen" },
-      });
-
-      console.log("Dosen user created successfully: dosen@mb.ai / password123");
+      console.log("Dosen user created successfully:", dosenUser.email);
     }
 
     // 3. Seed Menus
