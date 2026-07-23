@@ -23,6 +23,7 @@ interface ChunkDocumentInput {
   documentName: string;
   documentHash: string;
   pages: PdfPageText[];
+  userId?: string;
 }
 
 export function estimateTokenCount(text: string): number {
@@ -84,6 +85,7 @@ export function chunkPdfDocument(input: ChunkDocumentInput): PdfChunk[] {
       tokenCount: estimateTokenCount(chunkText),
       metadata: {
         parser: "pdf-parse",
+        ...(input.userId ? { userId: input.userId } : {}),
       },
     })),
   );
