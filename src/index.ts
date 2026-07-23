@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
 import documentRoutes from "./routes/documents.js";
 import menuRoutes from "./routes/menus.js";
+import { initBucket } from "./services/storage.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -28,6 +29,21 @@ app.get("/health", (_req: any, res: any) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
+app.get("/", (_req: any, res: any) => {
+  res.json({
+    status: "ok",
+    message:
+      "Hello! 🐾 Welcome to the MB.AI Chatbot API! We are ready to help you chat, learn, and grow. Have a wonderful day! ✨",
+  });
+});
+
+app.listen(PORT, async () => {
   console.log(`[api-chatbot] Server running on http://localhost:${PORT}`);
+
+  // Ensure S3 bucket exists
+  try {
+    await initBucket();
+  } catch (error) {
+    console.warn("[storage] Failed to initialize bucket:", error instanceof Error ? error.message : error);
+  }
 });

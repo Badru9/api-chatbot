@@ -13,12 +13,12 @@ const OPENAI_MODEL = "text-embedding-3-small";
 const baseUrl = (
   process.env.OPENAI_API_KEY
     ? process.env.OPENAI_URL || "https://api.openai.com/v1"
-    : process.env.LOCAL_MODEL_URL || "http://localhost:1234/v1"
+    : process.env.LOCAL_MODEL_URL || "http://localhost:11434/v1"
 ).replace(/\/embeddings\/?$/, "");
 
 const model = process.env.OPENAI_API_KEY
   ? OPENAI_MODEL
-  : "Xenova/all-MiniLM-L6-v2";
+  : process.env.LOCAL_EMBEDDING_MODEL || "mxbai-embed-large";
 
 interface EmbeddingResponse {
   data: { embedding: number[]; index: number }[];

@@ -14,12 +14,14 @@ interface RetrievePdfContextInput {
   prompt: string;
   documentIds: string[];
   limit?: number;
+  userId?: string;
 }
 
 export async function retrievePdfChunks({
   prompt,
   documentIds,
   limit = 8,
+  userId,
 }: RetrievePdfContextInput): Promise<RetrievedPdfChunk[]> {
   if (documentIds.length === 0) return [];
 
@@ -29,6 +31,7 @@ export async function retrievePdfChunks({
     embedding: promptEmbedding,
     documentIds,
     limit,
+    userId,
   });
 
   return initialChunks;

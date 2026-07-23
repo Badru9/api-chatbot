@@ -4,6 +4,7 @@ import { chunkPdfDocument } from "./chunker.js";
 import { deleteDocumentChunks, replacePdfChunks } from "./database.js";
 import { embedTexts } from "./embeddings.js";
 import { parsePdfPages } from "./pdfParser.js";
+import { uploadPdf } from "./storage.js";
 
 interface PdfDocument {
   id: string;
@@ -21,6 +22,7 @@ export async function ingestPdfBuffer(
   fileName: string,
   fileSize: number,
   mimeType: string,
+  userId?: string,
 ): Promise<PdfDocument> {
   if (fileSize > MAX_PDF_SIZE_BYTES) {
     throw new Error("Ukuran PDF maksimal 15 MB.");
@@ -40,6 +42,7 @@ export async function ingestPdfBuffer(
       documentName: fileName,
       documentHash,
       pages,
+      userId,
     });
 
     if (chunks.length === 0) {
@@ -48,6 +51,9 @@ export async function ingestPdfBuffer(
 
     const embeddings = await embedTexts(chunks.map((c: any) => c.chunkText));
     await replacePdfChunks(chunks, embeddings);
+
+    // Persist original PDF to object storage for preview/download
+    await uploadPdf(documentId, buffer, fileName);
 
     return {
       id: documentId,
