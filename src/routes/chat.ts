@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { retrievePdfContext } from "../services/retriever.js";
+import { prisma } from "../services/database.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -47,10 +48,15 @@ router.post("/context", async (req: any, res: any) => {
 
 router.post("/", async (req: any, res: any) => {
   try {
-    const { prompt, documentIds, messages } = req.body;
+    const { prompt, documentIds, messages, activeTools } = req.body;
+    const isJadwalToolActive = Array.isArray(activeTools) && activeTools.includes("jadwal");
+
+    console.log("req.body", req.body);
+
     const user = req.session?.user;
     const isUserAdmin = user?.role === "admin";
     const userId = isUserAdmin ? undefined : user?.id;
+    const scheduleUserId = user?.id;
 
     if (!prompt || typeof prompt !== "string") {
       res.status(400).json({ error: "Field prompt wajib diisi." });
@@ -63,6 +69,85 @@ router.post("/", async (req: any, res: any) => {
             typeof id === "string" && (id as string).trim().length > 0,
         )
       : [];
+
+    // Jika tool jadwal aktif dan ada documentIds, kita parse dokumen tersebut menjadi jadwal terstruktur
+    if (isJadwalToolActive && ids.length > 0 && scheduleUserId) {
+      try {
+        const chunks = await prisma.pdfChunk.findMany({
+          where: {
+            documentId: ids[0],
+            ...(userId ? { metadata: { path: ["userId"], equals: userId } } : {}),
+          },
+          orderBy: { chunkIndex: "asc" }
+        });
+
+        if (chunks.length > 0) {
+          const fullPdfText = chunks.map(c => c.chunkText).join("\n");
+
+          const ollamaHost = process.env.OLLAMA_HOST || "http://localhost:11434";
+          const ollamaModel = process.env.OLLAMA_MODEL || "qwen3.5";
+
+          const parsePrompt = `Ekstrak jadwal mengajar dari teks PDF berikut menjadi array JSON. 
+Format JSON harus berupa array objek dengan kunci-kunci berikut:
+- "day": Hari dalam Bahasa Indonesia (Senin/Selasa/Rabu/Kamis/Jumat/Sabtu/Minggu)
+- "startTime": Jam mulai format "HH:MM" (misal "08:00")
+- "endTime": Jam selesai format "HH:MM" (misal "09:40")
+- "courseName": Nama mata kuliah lengkap
+- "courseCode": Kode mata kuliah (bila ada, jika tidak null)
+- "className": Nama kelas (misal "IF-A", "TIF-3B")
+- "room": Ruangan (misal "Lab Komputer 1", "R.304")
+- "sks": Jumlah SKS (tipe data angka/integer)
+
+HANYA kembalikan array JSON yang valid tanpa teks pembuka/penutup lainnya. Jika ada data jam yang tidak lengkap, buat perkiraan terbaik.
+
+Teks PDF:
+${fullPdfText}`;
+
+          const ollamaParseRes = await fetch(`${ollamaHost}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: ollamaModel,
+              messages: [{ role: "user", content: parsePrompt }],
+              stream: false,
+            }),
+          });
+
+          if (ollamaParseRes.ok) {
+            const result = await ollamaParseRes.json() as any;
+            const jsonText = result.message?.content || "";
+            
+            // Bersihkan blok markdown ```json ... ``` jika LLM mengembalikannya
+            const cleanJson = jsonText.replace(/```json|```/g, "").trim();
+            
+            const parsedSchedules = JSON.parse(cleanJson);
+            if (Array.isArray(parsedSchedules)) {
+              // Hapus jadwal lama milik user
+              await prisma.schedule.deleteMany({ where: { userId: scheduleUserId } });
+
+              // Simpan jadwal baru
+              await prisma.schedule.createMany({
+                data: parsedSchedules.map((item: any) => ({
+                  userId: scheduleUserId,
+                  day: item.day || "Senin",
+                  startTime: item.startTime || "08:00",
+                  endTime: item.endTime || "09:40",
+                  courseName: item.courseName || "Mata Kuliah",
+                  courseCode: item.courseCode || null,
+                  className: item.className || "Reguler",
+                  room: item.room || "R. Kelas",
+                  sks: typeof item.sks === "number" ? item.sks : 2,
+                }))
+              });
+
+              console.log(`[schedules] Berhasil mengekstrak ${parsedSchedules.length} kelas jadwal untuk user ${scheduleUserId}.`);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Gagal melakukan parsing jadwal otomatis:", err);
+      }
+    }
 
     // 1. Get PDF Context
     let pdfContext = "";
@@ -78,10 +163,37 @@ router.post("/", async (req: any, res: any) => {
       }
     }
 
+    // 1b. Get List of Uploaded Documents for User Context
+    let uploadedDocsContext = "";
+    try {
+      const userDocs = await prisma.pdfChunk.groupBy({
+        by: ["documentId", "documentName"],
+        where: userId ? { metadata: { path: ["userId"], equals: userId } } : {},
+      });
+      console.log("userDocs", userDocs);
+
+      if (userDocs.length > 0) {
+        uploadedDocsContext =
+          "Dokumen yang telah diunggah oleh user di aplikasi ini:\n" +
+          userDocs.map((d) => `- ${d.documentName}`).join("\n");
+      } else {
+        uploadedDocsContext =
+          "User belum mengunggah dokumen apapun di aplikasi ini.";
+      }
+
+      console.log("uploadedDocs", uploadedDocsContext);
+    } catch (err) {
+      console.error("Failed to fetch user documents:", err);
+    }
+
     // 2. Build RAG prompt
-    const finalUserPrompt = pdfContext
-      ? `Gunakan informasi dokumen berikut untuk menjawab pertanyaan.\n\n[DOKUMEN CONTEXT]\n${pdfContext}\n\n[PERTANYAAN]\n${prompt.trim()}`
-      : prompt.trim();
+    let finalUserPrompt = prompt.trim();
+    if (pdfContext) {
+      finalUserPrompt = `Gunakan informasi dokumen berikut untuk menjawab pertanyaan.\n\n[DOKUMEN CONTEXT]\n${pdfContext}\n\n[PERTANYAAN]\n${finalUserPrompt}`;
+    }
+    if (uploadedDocsContext) {
+      finalUserPrompt = `[INFORMASI DOKUMEN DIUNGGAH]\n${uploadedDocsContext}\n\n${finalUserPrompt}`;
+    }
 
     // 3. Format messages
     const finalMessages = Array.isArray(messages) ? [...messages] : [];
@@ -179,12 +291,9 @@ router.post("/", async (req: any, res: any) => {
     res.end();
   } catch (error) {
     console.error("Chat error:", error);
-    res
-      .status(500)
-      .json({
-        error:
-          error instanceof Error ? error.message : "Gagal memproses pesan.",
-      });
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Gagal memproses pesan.",
+    });
   }
 });
 
