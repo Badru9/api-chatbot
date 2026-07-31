@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
 import documentRoutes from "./routes/documents.js";
 import menuRoutes from "./routes/menus.js";
+import scheduleRoutes from "./routes/schedules.js";
 import { initBucket } from "./services/storage.js";
 
 const app = express();
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/menus", menuRoutes);
+app.use("/api/schedules", scheduleRoutes);
 
 app.get("/health", (_req: any, res: any) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
