@@ -38,7 +38,7 @@ function normalizeText(text: string): string {
     .trim();
 }
 
-function splitText(
+export function splitText(
   text: string,
   maxChars = DEFAULT_MAX_CHARS,
   overlapChars = DEFAULT_OVERLAP_CHARS,

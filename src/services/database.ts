@@ -74,21 +74,43 @@ export async function deleteDocumentChunks(documentId: string): Promise<void> {
 
 export async function searchPdfChunks({
   embedding,
-  documentIds,
+  documentIds = [],
   limit = 8,
   userId,
 }: {
   embedding: number[];
-  documentIds: string[];
+  documentIds?: string[];
   limit?: number;
   userId?: string;
 }): Promise<RetrievedPdfChunk[]> {
-  if (documentIds.length === 0) return [];
-
   const vectorStr = `[${embedding.join(",")}]`;
-  const placeholders = documentIds.map((_, i) => `$${i + 2}`).join(", ");
 
-  let query = `
+  const conditions: string[] = [];
+  const queryParams: any[] = [vectorStr];
+
+  let docIdCondition = "";
+  if (documentIds.length > 0) {
+    const placeholders = documentIds.map((_, i) => `$${i + 2}`).join(", ");
+    docIdCondition = `document_id IN (${placeholders})`;
+    queryParams.push(...documentIds);
+  }
+
+  const publicCondition = `metadata->>'isPublic' = 'true'`;
+
+  if (docIdCondition) {
+    conditions.push(`(${docIdCondition} OR ${publicCondition})`);
+  } else {
+    conditions.push(publicCondition);
+  }
+
+  if (userId) {
+    conditions.push(`(metadata->>'isPublic' = 'true' OR metadata->>'userId' = $${queryParams.length + 1})`);
+    queryParams.push(userId);
+  }
+
+  const whereClause = conditions.join(" AND ");
+
+  const query = `
     SELECT
       document_id,
       document_name,
@@ -97,17 +119,7 @@ export async function searchPdfChunks({
       chunk_text,
       1 - (embedding <=> $1::vector) AS score
     FROM vectors
-    WHERE document_id IN (${placeholders})
-  `;
-
-  const queryParams: any[] = [vectorStr, ...documentIds];
-
-  if (userId) {
-    query += ` AND metadata->>'userId' = $${queryParams.length + 1}`;
-    queryParams.push(userId);
-  }
-
-  query += `
+    WHERE ${whereClause}
     ORDER BY score DESC
     LIMIT ${Number(limit)}
   `;

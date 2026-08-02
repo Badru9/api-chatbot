@@ -23,8 +23,6 @@ export async function retrievePdfChunks({
   limit = 8,
   userId,
 }: RetrievePdfContextInput): Promise<RetrievedPdfChunk[]> {
-  if (documentIds.length === 0) return [];
-
   const promptEmbedding = await embedText(prompt);
 
   const initialChunks = await searchPdfChunks({

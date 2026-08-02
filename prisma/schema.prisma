@@ -38,6 +38,7 @@ model User {
   role          String    @default("dosen") // "admin" atau "dosen"
   sessions      Session[]
   accounts      Account[]
+  schedules     Schedule[]
 
   @@map("user")
 }
@@ -100,3 +101,22 @@ model PortalMenu {
 
   @@map("portal_menu")
 }
+
+model Schedule {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day        String   // "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"
+  startTime  String   // format "HH:MM" (misal "08:00")
+  endTime    String   // format "HH:MM" (misal "09:40")
+  courseName String   @map("course_name")
+  courseCode String?  @map("course_code")
+  className  String   @map("class_name") // misal "IF-A"
+  room       String   // misal "Lab AI"
+  sks        Int      @default(2)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("schedules")
+}
+

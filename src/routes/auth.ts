@@ -1,17 +1,14 @@
 import { Router } from "express";
-import { login, logout, getSession } from "../services/auth.js";
+import { login, logout } from "../services/auth.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { validateBody, loginSchema } from "../middleware/validators.js";
 
 const router = Router();
 
 // POST /api/auth/sign-in/email or /api/auth/login
-router.post(["/login", "/sign-in/email"], async (req: any, res: any) => {
+router.post(["/login", "/sign-in/email"], validateBody(loginSchema), async (req: any, res: any) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      res.status(400).json({ error: "Email dan password wajib diisi." });
-      return;
-    }
 
     const ipAddress = req.ip || req.headers["x-forwarded-for"];
     const userAgent = req.headers["user-agent"];

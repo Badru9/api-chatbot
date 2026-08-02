@@ -13,6 +13,15 @@ export interface PdfPageText {
 }
 
 export interface PdfChunk {
+  // documentId: string;
+  // documentName: string;
+  // documentHash: string;
+  // pageNumber: number | null;
+  // chunkIndex: number;
+  // chunkText: string;
+  // tokenCount: number;
+  id: number;
+  // metadata: JsonValue;
   documentId: string;
   documentName: string;
   documentHash: string;
@@ -20,6 +29,7 @@ export interface PdfChunk {
   chunkIndex: number;
   chunkText: string;
   tokenCount: number;
+  createdAt: Date;
   metadata?: Record<string, unknown>;
 }
 

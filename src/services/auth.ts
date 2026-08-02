@@ -87,7 +87,6 @@ export async function getSession(token: string) {
     session: {
       id: session.id,
       userId: session.userId,
-      token: session.token,
       expiresAt: session.expiresAt,
     },
     user: session.user,

@@ -1,29 +1,45 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
 import documentRoutes from "./routes/documents.js";
 import menuRoutes from "./routes/menus.js";
+import scheduleRoutes from "./routes/schedules.js";
 import { initBucket } from "./services/storage.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Security headers
+app.use(helmet());
+
+// CORS configuration
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim());
+
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
+
+import { requestLogger } from "./middleware/requestLogger.js";
+import { generalLimiter } from "./middleware/rateLimiter.js";
+app.use(requestLogger);
+app.use(generalLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/menus", menuRoutes);
+app.use("/api/schedules", scheduleRoutes);
 
 app.get("/health", (_req: any, res: any) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
