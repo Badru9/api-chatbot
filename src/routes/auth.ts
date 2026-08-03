@@ -6,7 +6,7 @@ import { validateBody, loginSchema } from "../middleware/validators.js";
 const router = Router();
 
 // POST /api/auth/sign-in/email or /api/auth/login
-router.post(["/login", "/sign-in/email"], validateBody(loginSchema), async (req: any, res: any) => {
+router.post("/login", validateBody(loginSchema), async (req: any, res: any) => {
   try {
     const { email, password } = req.body;
 
@@ -29,20 +29,28 @@ router.post(["/login", "/sign-in/email"], validateBody(loginSchema), async (req:
     res.json(result);
   } catch (error) {
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Gagal melakukan autentikasi.",
+      error:
+        error instanceof Error ? error.message : "Gagal melakukan autentikasi.",
     });
   }
 });
 
 // POST /api/auth/logout or /api/auth/sign-out
-router.post(["/logout", "/sign-out"], async (req: any, res: any) => {
+router.post("/logout", async (req: any, res: any) => {
   try {
     const authHeader = req.headers?.authorization;
-    let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.substring(7).trim() : null;
+    let token =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.substring(7).trim()
+        : null;
 
     if (!token && req.headers?.cookie) {
-      const cookies = req.headers.cookie.split(";").map((c: string) => c.trim());
-      const sessionCookie = cookies.find((c: string) => c.startsWith("session_token="));
+      const cookies = req.headers.cookie
+        .split(";")
+        .map((c: string) => c.trim());
+      const sessionCookie = cookies.find((c: string) =>
+        c.startsWith("session_token="),
+      );
       if (sessionCookie) token = sessionCookie.split("=")[1];
     }
 
