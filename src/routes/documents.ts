@@ -3,8 +3,7 @@ import multer from "multer";
 import crypto from "crypto";
 import { v4 as uuid } from "uuid";
 
-import { requireAuth } from "../middleware/requireAuth.js";
-import { requireAdmin } from "../middleware/requireAdmin.js";
+import { requireAuth, requireAdmin } from "../middleware/requireAuth.js";
 import {
   deleteDocumentChunks,
   prisma,
@@ -105,7 +104,9 @@ router.post("/", upload.single("file"), async (req: any, res: any) => {
     }
 
     if (!isPdfBuffer(file.buffer)) {
-      res.status(400).json({ error: "File yang diunggah bukan PDF yang valid." });
+      res
+        .status(400)
+        .json({ error: "File yang diunggah bukan PDF yang valid." });
       return;
     }
 
@@ -126,63 +127,71 @@ router.post("/", upload.single("file"), async (req: any, res: any) => {
 });
 
 // POST manual dataset input
-router.post("/manual", requireAdmin, validateBody(manualDatasetSchema), async (req: any, res: any) => {
-  try {
-    const { name, description, source } = req.body;
-    const userId = req.session?.user?.id;
+router.post(
+  "/manual",
+  requireAdmin,
+  validateBody(manualDatasetSchema),
+  async (req: any, res: any) => {
+    try {
+      const { name, description, source } = req.body;
+      const userId = req.session?.user?.id;
 
-    const documentHash = crypto.createHash("sha256").update(description).digest("hex");
-    const documentId = `manual-${uuid()}`;
+      const documentHash = crypto
+        .createHash("sha256")
+        .update(description)
+        .digest("hex");
+      const documentId = `manual-${uuid()}`;
 
-    const pages = [{ pageNumber: 1, text: description }];
-    const chunks = chunkPdfDocument({
-      documentId,
-      documentName: name,
-      documentHash,
-      pages,
-      userId,
-    });
+      const pages = [{ pageNumber: 1, text: description }];
+      const chunks = chunkPdfDocument({
+        documentId,
+        documentName: name,
+        documentHash,
+        pages,
+        userId,
+      });
 
-    if (chunks.length === 0) {
-      res
-        .status(400)
-        .json({ error: "Deskripsi dataset tidak memiliki teks yang valid." });
-      return;
+      if (chunks.length === 0) {
+        res
+          .status(400)
+          .json({ error: "Deskripsi dataset tidak memiliki teks yang valid." });
+        return;
+      }
+
+      const processedChunks = chunks.map((chunk) => ({
+        ...chunk,
+        metadata: {
+          ...chunk.metadata,
+          isPublic: true,
+          source: source || "",
+        },
+      }));
+
+      const embeddings = await embedTexts(
+        processedChunks.map((c) => c.chunkText),
+      );
+      await replacePdfChunks(processedChunks, embeddings);
+
+      res.status(201).json({
+        document: {
+          id: documentId,
+          name,
+          size: Buffer.byteLength(description, "utf-8"),
+          type: "manual",
+          uploadedAt: new Date().toISOString(),
+          chunksCount: chunks.length,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Gagal menyimpan dataset manual.",
+      });
     }
-
-    const processedChunks = chunks.map((chunk) => ({
-      ...chunk,
-      metadata: {
-        ...chunk.metadata,
-        isPublic: true,
-        source: source || "",
-      },
-    }));
-
-    const embeddings = await embedTexts(
-      processedChunks.map((c) => c.chunkText),
-    );
-    await replacePdfChunks(processedChunks, embeddings);
-
-    res.status(201).json({
-      document: {
-        id: documentId,
-        name,
-        size: Buffer.byteLength(description, "utf-8"),
-        type: "manual",
-        uploadedAt: new Date().toISOString(),
-        chunksCount: chunks.length,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Gagal menyimpan dataset manual.",
-    });
-  }
-});
+  },
+);
 
 // GET download/preview PDF
 router.get("/:id/download", async (req: any, res: any) => {

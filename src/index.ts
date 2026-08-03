@@ -60,6 +60,9 @@ app.listen(PORT, async () => {
   try {
     await initBucket();
   } catch (error) {
-    console.warn("[storage] Failed to initialize bucket:", error instanceof Error ? error.message : error);
+    console.warn(
+      "[storage] Failed to initialize bucket:",
+      error instanceof Error ? error.message : error,
+    );
   }
 });
